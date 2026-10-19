@@ -1,64 +1,100 @@
-# Carom — starter project
+# Carom
 
-This repository is the starting point for building **Carom**, the game the
-specification under `specs/` describes. Read `specs/overview.md` first; it says
-how the rest of the specification is organized.
+**Carom** is a top-down paddle duel that runs entirely in the browser. Two
+paddles face each other across a dark field while a ball ricochets between them,
+off the top and bottom walls, and off a pair of obstacles in the middle of the
+field. A player scores when the ball passes the far edge behind their opponent's
+paddle.
 
-This build runs on **no engine**. Nothing here supplies a frame loop, input,
-audio, asset loading, or an overlay, and there is no game code to start from.
-What the project supplies is the toolchain, already configured and installed:
-TypeScript, Vite, Vitest, ESLint and Prettier, wired to the commands below.
+Carom's defining mechanic is **spin**: the motion of a paddle at the moment it
+strikes the ball curves that ball's flight afterward. The two mid-field obstacles
+turn the open field into a bank-shot puzzle.
 
-## What you own
+The game runs on no engine. The frame loop, the canvas fit, input, audio, the
+diagnostics overlay, the physics, and the renderer are all written here, in
+TypeScript, and everything is drawn in code — the build ships no art or audio
+files and fetches nothing at runtime.
 
-**Everything under `src/`.** The directory does not exist yet; create it.
+## Modes
 
-`index.html` loads `/src/main.ts` as its entry point, so that module is where
-your build starts. Beyond that the structure is yours. You write the runtime a
-browser game needs — the frame loop and the delta time it measures, fitting the
-fixed logical field onto the canvas, keyboard input, audio, and the diagnostics
-overlay — and you write the game itself on top of it.
+- **Solo** — you take the left paddle; an AI opponent takes the right.
+- **Versus** — two players share the keyboard, one per side.
 
-You also write the `window.__carom` debugging and automation API that
-`specs/instrumentation.md` specifies. It is a required deliverable: it is how the
-game is driven from code, so it is present and exactly as specified.
+First to **11 points**, win by **2**.
 
-Every figure the specification fixes — geometry, speeds, spin, the match rules,
-the action names, the cue names — is stated in `specs/`, and the value stated
-there is authoritative.
+## Controls
 
-Tests you write belong beside your sources as `src/**/*.test.ts`. `npm test` runs
-them in process, in Node, with coverage over `src/`. `@napi-rs/canvas` is
-installed, so a test that needs a real 2D context can draw through one without a
-browser.
+| Action | Keys |
+| --- | --- |
+| Player 1 up / down | `W` / `S` |
+| Player 2 up / down | `↑` / `↓` |
+| Confirm | `Enter`, `Space` |
+| Pause / resume | `P`, `Esc` |
+| Back (in menus) | `Esc` |
+| Mute | `M` |
 
-## What you must not edit
+In **Solo**, any of the four up/down keys drives your (left) paddle. In
+**Versus**, `W`/`S` drive the left paddle and `↑`/`↓` drive the right.
 
-- **`index.html`** — the page and the canvas.
-- **The toolchain** — `package.json`, `tsconfig.json`, `vite.config.ts`,
-  `vitest.config.ts`, `eslint.config.js`, `.prettierrc.json`, `.prettierignore`,
-  and `.gitignore`.
+The menus can also be driven with the mouse or by touch: hover or tap to
+highlight an item, click or tap to confirm it.
 
-Add dependencies to `package.json` if you genuinely need them, and commit the
-`package-lock.json` — the build is installed with `npm ci`. Leave the existing
-entries and scripts alone.
+Press the backtick key (`` ` ``) at any time to toggle a diagnostics overlay.
 
-## Commands
+## Spin, in a sentence
 
-- `npm run dev` — serves the game with hot reload.
-- `npm run build` — type-checks, then emits the static site into `dist/`.
-- `npm run preview` — serves `dist/` for a final check.
-- `npm run typecheck` — `tsc --noEmit`.
-- `npm run lint` — ESLint.
-- `npm run format` — Prettier, in check mode.
-- `npm test` — Vitest over `src/**/*.test.ts`, with coverage.
+Move your paddle as the ball hits it. A paddle sweeping downward on contact bends
+the ball's path one way; sweeping upward bends it the other. Combine spin with the
+obstacles to curve a shot into a gap your opponent cannot reach.
 
-## Before you finish
+## Requirements
 
-- `npm run build` produces `dist/` with `index.html` at its root, and that
-  directory runs as-is on any static host.
-- `npm run typecheck`, `npm run lint`, `npm run format`, and `npm test` all pass.
-  The same four commands are run over the repository you leave behind.
-- **Replace this file** with the `README.md` `specs/overview.md` asks the
-  finished build to ship: what the game is, how to install it, how to run it in
-  development, how to produce the production build, and the controls.
+- Node.js 20+ and npm.
+
+## Install
+
+```sh
+npm ci
+```
+
+## Run in development
+
+```sh
+npm run dev
+```
+
+Vite serves the game with hot reload and prints the local URL.
+
+## Production build
+
+```sh
+npm run build
+```
+
+This type-checks and emits a complete, self-contained static site into `dist/`,
+with `index.html` at its root. The directory runs as-is on any static file
+server, served at the root or from a sub-path.
+
+```sh
+npm run preview
+```
+
+serves the built `dist/` for a final check.
+
+## Checks
+
+| Command | Checks |
+| --- | --- |
+| `npm run typecheck` | The code type-checks (`tsc --noEmit`). |
+| `npm run lint` | The code is lint-clean (ESLint). |
+| `npm run format` | The code is formatted (Prettier, check mode). |
+| `npm test` | The unit tests pass (Vitest), with coverage over `src/`. |
+
+## Automation surface
+
+Once the game has initialized it installs `window.__carom`, a debugging and
+automation surface that drives and inspects the running game from code without
+the keyboard or real time. It can take the game off the wall clock
+(`setAutoStep`, `advance`), pose the world (screens, scores, the paddles, the
+ball, the obstacles), and read it back (`snapshot`, `menuItemRect`). See
+`specs/instrumentation.md` for the full surface.
